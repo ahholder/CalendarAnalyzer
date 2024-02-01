@@ -5,8 +5,8 @@
 let overlay;
 let board;
 let context;
-let mapTerrain;
-let layers = [];
+let mapTerrain; //Unused?
+let layers = []; //Unused?
 let boardWidth = 700;
 let boardHeight = 700;
 let fps = 60;
@@ -22,20 +22,21 @@ let eventQueue = [];
 let repeatQueue = [];
 let blockedAreas = [];
 
-let gameActive = true;
+let gameActive = true; //Unused?
 
-let gridSize = [70, 70, 0, 0];
-let totalTiles;
-let grid = [];
-let selected = -1;
+let gridSize = [70, 70, 0, 0]; //Unused?
+let totalTiles; //Unused?
+let grid = []; //Unused?
+let selected = -1; //Unused?
 let mouseSpot = [];
 
 let dropdowns;
 let holidayList = [];
+//let holidayDefaults = []; //Unused?
 
-let HPs = [];
-let pathfinder = [];
-let weather = [];
+let HPs = []; //Unused?
+let pathfinder = []; //Unused?
+let weather = []; //Unused?
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 //Startup Functions
@@ -170,6 +171,15 @@ function testFrameOne() {
     if (globalAnimationCycle == 1) {
         //commonWeather("light rain");
         //makePathfinder();
+
+        /*console.log(makeHolidayDefaults(2024));
+        console.log(checkLunarCalendar(new Date(2024, 1, 1)));
+        console.log(findNextLunarPhase("Full", getEquinox(2024, "spring"), 1));
+        console.log(getEquinox(2024, "spring"));
+        console.log(checkLunarCalendar(new Date(2024, 2, 24)));
+        console.log(checkLunarCalendar(new Date(2024, 2, 23)));
+        console.log(applyHolidays([new Date(2024, 9, 14)], true, false));
+        console.log(applyHolidays([new Date(2024, 9, 14)], false, false));*/
     }
 }
 
@@ -183,7 +193,7 @@ function testFrameOne() {
   //-Specialized Alert for January* to Remind Jennifer to Submit on Thursday
     //-Makes February the Month with an Additional Pay Period, Giving More Time to Accrue Funds
 
-//Future Project: Make Dropdown Menu to Enable Selection of Federal Holidays
+//Future Project: Make Dropdown Menu to Enable Selection of Holidays from Federal/Major Holidays
 
 //<div id="spclTest" style="width: 200px; height: 100%; border: 1px solid red; background: skyblue; display: flex; position: relative"></div>
 
@@ -358,7 +368,7 @@ function makeDropdownSday() {
 //Adds Holidays to Dropdown Menu Shol
 function makeDropdownShol() {
     let drop = dropdowns.shol;
-    let units = ["Shown", "Hidden"];
+    let units = ["Banking", "All Major", "Ignored"];
     for (let i = 0; i < units.length; i++) {
         makeDropdownOption(drop, units[i], units[i]);
     }
@@ -467,8 +477,17 @@ function makeCalendarResult(result) {
 }
 
 //Creates an Element for Results (Payroll)
-function makePayrollResult(result, era) {
-    let subd = getPayrollSubDate(result, false);
+function makePayrollResult(baseline, era) {
+    let result = applyHolidays([baseline], false, false)[0];
+    let subd = applyHolidays([getPayrollSubDate(baseline, false)], true, false)[0];
+    let verifiers = [getPayrollSubDate(baseline, false), baseline];
+    let verified = false;
+    for (let i = 0; i < holidayList.length; i++) {
+        if (datesAreSame(verifiers[0], holidayList[i]) || datesAreSame(verifiers[1], holidayList[i])) {
+            verified = true;
+            i = holidayList.length;
+        }
+    }
     let winTerms;
     let winValues;
     let winStyling;
@@ -483,6 +502,16 @@ function makePayrollResult(result, era) {
     let t = "center";
     let tp = p + 3;
     let f = 18;
+    if (verified) {
+        let bpx = 2;
+        if (result.getDate() > 9 && result.getMonth() > 8) {
+            bpx = 1;
+        }
+        b = bpx + "px solid red";
+        if (c != "#D0EEEE") b = bpx + "px solid black";
+        w -= bpx * 2;
+        h -= bpx * 2;
+    }
 
     winDisplay = "" + styleCalDate(result, dropdowns.style.value, true, false) + "\n\nSubmitted:\n" + styleCalDate(subd, dropdowns.style.value, true, false);
 
@@ -557,6 +586,7 @@ function makeAllCalendarResults() {
     let defML = 10;
     let calendarUsed = gatherCalendarDates();
     let min = calendarUsed.cur;
+    //let gathered = removeEarlyCalendarDates(applyHolidays(calendarUsed.result, false, false), min);
     let gathered = removeEarlyCalendarDates(calendarUsed.result, min);
     let mTrack;
     if (dropdowns.purpose.value == "Payroll") mTrack = checkMonthPayPer(gathered, true);
@@ -581,7 +611,7 @@ function makeAllCalendarResults() {
         if (dropdowns.purpose.value == "Default") {
             makeCalendarResult(gathered[i]);
         } else {
-            makePayrollResult(gathered[i], parseInt(mTrack[getPayrollSubDate(gathered[i], false).getMonth()])); //Update Era-ID After Establishing
+            makePayrollResult(gathered[i], parseInt(mTrack[getPayrollSubDate(gathered[i], false).getMonth()]));
         }
     }
 
@@ -626,6 +656,109 @@ function getPayrollSubDate(endDate, delayWeek) {
     }
 
     return result;
+}
+
+//Accounts for Holidays in Final Tally
+function applyHolidays(calendar, forward, avoidWeekends) {
+    let years = [];
+    for (let i = 0; i < calendar.length; i++) {
+        if (doesInclude(years, calendar[i].getFullYear()) == false) years[years.length] = calendar[i].getFullYear();
+    }
+
+    makeHolidayList(years);
+
+    for (let i = 0; i < calendar.length; i++) {
+        let same = false;
+        for (let i2 = 0; i2 < holidayList.length; i2++) {
+            if (datesAreSame(calendar[i], holidayList[i2])) {
+                same = true;
+                i2 = holidayList.length;
+            }
+        }
+        if (same) {
+            if (forward) {
+                calendar[i] = new Date(calendar[i].getFullYear(), calendar[i].getMonth(), parseInt(calendar[i].getDate()) + 1);
+            } else {
+                calendar[i] = new Date(calendar[i].getFullYear(), calendar[i].getMonth(), parseInt(calendar[i].getDate()) - 1);
+            }
+        }
+        if (avoidWeekends && isWeekend(calendar[i])) {
+            if (forward) {
+                if (calendar[i].getDay() == 6) {
+                    calendar[i] = new Date(calendar[i].getFullYear(), calendar[i].getMonth(), parseInt(calendar[i].getDate()) + 2);
+                } else {
+                    calendar[i] = new Date(calendar[i].getFullYear(), calendar[i].getMonth(), parseInt(calendar[i].getDate()) + 1);
+                }
+            } else {
+                if (calendar[i].getDay() == 6) {
+                    calendar[i] = new Date(calendar[i].getFullYear(), calendar[i].getMonth(), parseInt(calendar[i].getDate()) - 1);
+                } else {
+                    calendar[i] = new Date(calendar[i].getFullYear(), calendar[i].getMonth(), parseInt(calendar[i].getDate()) - 2);
+                }
+            }
+        }
+    }
+
+    return calendar;
+}
+
+//Returns a List of Applied Holidays
+function makeHolidayList(years) {
+    holidayList = [];
+    if (dropdowns.shol.value == "Ignored") return;
+
+    if (typeof years == "number") years = [years];
+    for (let i = 0; i < years.length; i++) {
+        holidayList = combineArrays(holidayList, makeHolidayDefaults(years[i]));
+    }
+}
+
+//Returns a List of All Holidays Across One or More Calendar Years
+function makeHolidayDefaults(year) {
+    let result = [];
+    let temp;
+
+    //Banking Holidays
+    result[result.length] = new Date(year, 0, 1); //New Year's Day
+    result[result.length] = getMonthOccasion(year, 0, 1, 2); //MLK's Birthday
+    result[result.length] = getMonthOccasion(year, 1, 1, 2); //Washington's Birthday
+    result[result.length] = getMonthOccasion(year, 1, 1, "Last"); //Memorial Day
+    result[result.length] = new Date(year, 5, 19); //Juneteenth
+    result[result.length] = new Date(year, 6, 4); //Independence Day
+    result[result.length] = getMonthOccasion(year, 8, 1, "First"); //Labor Day
+    result[result.length] = getMonthOccasion(year, 9, 1, 1); //Columbus Day
+    result[result.length] = new Date(year, 10, 11); //Veteran's Day
+    result[result.length] = getMonthOccasion(year, 10, 4, 3); //Thanksgiving
+    result[result.length] = new Date(year, 11, 25); //Christmas Day
+
+    if (dropdowns.shol.value == "Banking") return result;
+
+    //Other Major Holidays
+    temp = result[result.length - 2];
+    result[result.length] = new Date(year, temp.getMonth(), parseInt(temp.getDate() + 1)); //Day After Thanksgiving
+
+    result[result.length] = new Date(year, 11, 24); //Christmas Eve
+    if (year % 4 == 0) {
+        result[result.length] = new Date(year, 0, 20); //Inauguration Day
+        if (result[result.length - 1] == 6) result[result.length - 1] = new Date(year, 0, 21);
+    }
+
+    temp = getNextDay(findNextLunarPhase("Full", getEquinox(year, "spring"), 2), 0, 1);
+    result[result.length] = new Date(year, temp.getMonth(), temp.getDate()); //Easter
+    temp = result[result.length - 1];
+    result[result.length] = new Date(year, temp.getMonth(), parseInt(temp.getDate()) - 47); //Mardi Gras
+    result[result.length] = new Date(year, temp.getMonth(), parseInt(temp.getDate()) - 2); //Good Friday
+
+    result[result.length] = getMonthOccasion(year, 1, 1, 3); //President's Day
+
+    return result;
+}
+
+//Returns if a Day is a Weekend
+function isWeekend(day) {
+    let weekday = day.getDay();
+    if (weekday == 6 || weekday == 0) return true;
+    return false;
 }
 
 //Returns Montsh with Anomalous Numbers of Pay Periods
@@ -1181,6 +1314,140 @@ function getCalendarYears(catalogue) {
     }
 
     return result;
+}
+
+//Returns Specific Day(s) in a Month
+function getMonthOccasion(year, month, day, num) {
+    let tracker = month + 0;
+    let tally = 1;
+    let collection = [];
+    collection[collection.length] = new Date(year, month, tally);
+    while (tracker == month) {
+        tally += 1;
+        let sample = new Date(year, month, tally);
+        tracker = sample.getMonth();
+        if (tracker == month) {
+            collection[collection.length] = new Date(year, month, tally);
+        } 
+    }
+
+    let result = [];
+    for (let i = 0; i < collection.length; i++) {
+        if (collection[i].getDay() == day) result[result.length] = collection[i];
+    }
+
+    if (typeof num == "number") {
+        if (num < 0 || num > 7 || num >= result.length) return result;
+
+        return result[num];
+    }
+
+    if (typeof num == "string") {
+        if (num == "First" || num == "first") return result[0];
+        if (num == "Last" || num == "last") return result[result.length - 1];
+        return result;
+    }
+
+    return result; //Failsafe
+}
+
+//Returns the Next Instance of a Specific Day Past a Date
+function getNextDay(day, weekday, skip) {
+    if (typeof weekday == "string") weekday = nameWeekday(weekday, false);
+
+    result = -1;
+    let tally = 0;
+    let cap = 365;
+    let skipped = 0;
+    while (result == -1) {
+        tally += 1;
+        let check = new Date(day.getFullYear(), day.getMonth(), parseInt(day.getDate()) + tally);
+        if (check.getDay() == weekday) {
+            skipped += 1;
+            if (skipped >= skip) result = check;
+        } else {
+            if (tally >= cap) result = day;
+        }
+    }
+
+    return result;
+}
+
+//Returns Details for a Lunar Calendar
+function checkLunarCalendar(day) {
+    let dir;
+    let lunarMonth = 29.530588853;
+    let julian = (day.getTime() / 86400000) - (day.getTimezoneOffset() / 1440) + 2440587.5;
+    let base = (julian - 2451550.1) / lunarMonth;
+    let progress = (base - Math.floor(base));
+    if (progress < 0) progress += 1;
+    let lunarAge = progress * lunarMonth;
+    if (lunarAge <= 14.765) {
+        dir = "Waxing";
+    } else {
+        dir = "Waning";
+    }
+
+    let thresholds = [1.84566, 5.53699, 9.22831, 12.91963, 16.61096, 20.30288, 23.99361, 27.68493];
+    let titles = ["New", dir + " Crescent", "First Quarter", dir + " Gibbous", "Full", dir + " Gibbous", "Last Quarter", dir + " Crescent"];
+    for (let i = 0; i < thresholds.length; i++) {
+        if (lunarAge < thresholds[i]) return titles[i];
+    }
+
+    return titles[0];
+}
+
+//Finds the First Time of a Lunar Phase After a Date
+function findNextLunarPhase(phase, day, skip) {
+    result = -1;
+    let tally = 0;
+    let cap = 365;
+    let skipped = 0;
+    while (result == -1) {
+        tally += 1;
+        let check = new Date(day.getFullYear(), day.getMonth(), parseInt(day.getDate()) + tally);
+        if (checkLunarCalendar(check) == phase) {
+            skipped += 1;
+            if (skipped >= skip) result = check;
+        } else {
+            if (tally >= cap) result = day;
+        }
+    }
+
+    return result;
+}
+
+//Returns a Day for an Equinox
+function getEquinox(year, type) {
+    let day;
+    if (type == "spring" || type == "Spring") {
+        if (checkLeapYear(year)) {
+            day = new Date(year, 2, 19);
+        } else {
+            day = new Date(year, 2, 20);
+        }
+    }
+    if (type == "summer" || type == "Summer") day = new Date(year, 5, 21);
+    if (type == "winter" || type == "Winter") day = new Date(year, 11, 21);
+    if (type == "fall" || type == "Fall" || type == "autumn" || type == "Autumn") {
+        let c = 23.042;
+        if (year < 2000) c = 23.822;
+        let temp = year.toString();
+        let yr = temp[temp.length - 2] + temp[temp.length - 1];
+        let cent = temp[0] + temp[1];
+        let lp = 0;
+        for (let i = 0; i < 100; i++) {
+            let x = i.toString();
+            if (i < 10) x = "0" + i.toString();
+            x = parseInt(cent.toString() + x);
+            if (checkLeapYear(x)) lp += 1;
+        }
+        let fall = (yr * 0.2422 + c) - (lp/4);
+        if (year == 1927) fall += 1;
+        day = new Date(year, 8, fall);
+    }
+
+    return day;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
