@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar Marker by Alex H.</title>
+      <link rel="stylesheet" href="styling.css">
+      <script src="app.js"></script>
+  </head>
+  <body>
+      <div id="backdrop">
+          <div id="contents">
+              <canvas id="board"></canvas>
+              <div id="primary">
+                  <div id="title">Date Calculator</div>
+                  <div id="majority">
+
+                      <div id="setup">
+
+                          <div id="wfo" style="display: block">
+                              <div id="wf" style="display: flex">
+
+                                  <div id="wdate">
+                                      <div class="date" id="date" style="text-align: center">
+                                          <div id="wtitle" style="font-size: 20px; display: block; text-align: center;">Starting Date</div>
+                                          <select class="dmonth" name="dmonth" value="" id="dmonth" style="background-color: lightgoldenrodyellow;"></select>
+                                          <select class="dday" name="dday" value="" id="dday" style="background-color: lightgoldenrodyellow; text-align: center "></select>
+                                          <select class="dyear" name="dyear" value="" id="dyear" style="background-color: lightgoldenrodyellow; text-align: center "></select>
+                                      </div>
+                                  </div>
+
+                                  <div id="fdate">
+                                      <div class="fiscal" id="fiscal" style="text-align: center">
+                                          <div id="ftitle" style="font-size: 20px; display: block; text-align: center;">Fiscal Year Start</div>
+                                          <select class="fmonth" name="fmonth" value="" id="fmonth" style="background-color: lightgoldenrodyellow; text-align: center"></select>
+                                          <select class="fday" name="fday" value="" id="fday" style="background-color: lightgoldenrodyellow; text-align: center"></select>
+                                      </div>
+                                  </div>
+
+                              </div>
+
+                              <div id="setting">
+                                  <div class="settingz" id="settingz" style="text-align: center; display: block; border: none">
+                                      <div id="sot" style="font-size: 20px; display: block; text-align: center; border: none">Settings</div>
+
+                                      <div id="sos" style="display: flex; text-align: center; font-size: 16px">
+
+                                          <div id="so1" style="display:block; margin-left: 10px; padding-right: 10px; border-right: 1px solid black">
+                                              <div id="sot1" style="font-size: 20px; display: block; padding-bottom: 3px">Style</div>
+                                              <select class="soc1" name="soc1" value="" id="soc1" style="background-color: lightgoldenrodyellow; text-align: center; font-size: 14px"></select>
+                                          </div>
+
+                                          <div id="so2" style="display: block; margin-left: 10px; padding-right: 10px; border-right: 1px solid black">
+                                              <div id="sot2" style="font-size: 20px; display: block; padding-bottom: 3px">Purpose</div>
+                                              <select class="soc2" name="soc2" value="" id="soc2" style="background-color: lightgoldenrodyellow; text-align: center; font-size: 14px"></select>
+                                          </div>
+
+                                          <div id="so4" style="display: block; margin-left: 10px; padding-right: 10px; border-right: 1px solid black">
+                                              <div id="sot4" style="font-size: 20px; display: block; padding-bottom: 3px">Holidays</div>
+                                              <select class="soc4" name="soc4" value="" id="soc4" style="background-color: lightgoldenrodyellow; text-align: center; font-size: 14px"></select>
+                                          </div>
+
+                                      </div>
+
+                                  </div>
+                              </div>
+
+                          </div>
+
+                          <div id="query">
+                              <div class="weekday" id="weekday" style="text-align: center; display: inline-block">
+                                  <div id="label1" style="font-size: 20px; width: 200px">Weekday</div>
+                                  <select class="weekdays" name="weekdays" value="" id="weekdays"></select>
+                              </div>
+                              <div class="so3" id="so3" style="text-align: center; display: inline-block ">
+                                  <div id="sot3" style="font-size: 20px; width: 200px">Submission Day</div>
+                                  <select class="soc3" name="soc3" value="" id="soc3"></select>
+                              </div>
+                              <div class="freq" id="freq" style="text-align: center; display: inline-block ">
+                                  <div id="label2" style="font-size: 20px; width: 200px">Frequency</div>
+                                  <select class="frequency" name="frequency" value="" id="frequency">
+                                      <option value="first">First</option>
+                                      <option value="last">Last</option>
+                                  </select>
+                              </div>
+                              <div class="interval" id="interval" style="text-align: center; display: inline-block ">
+                                  <div id="label3" style="font-size: 20px; width: 200px">Interval</div>
+                                  <select class="intervals" name="intervals" value="" id="intervals"></select>
+                              </div>
+                          </div>
+                      </div>
+
+                      <div id="result" style="display: block; background-color: lightcyan; color: black; width: 690px; margin: 0 auto; border-radius: 4px">
+
+                          <div id="resultt" style="font-size: 36px; width: 100%; text-align: center; padding-top: 5px">Results</div>
+
+                          <div id="results" style="display: flex; overflow-y: auto; overflow-x: hidden; flex-wrap: wrap; margin: 0 auto; z-index: 7; width: 100%; height: 400px; user-select: text; margin-left: 10px">
+                          </div>
+
+                      </div>
+                  </div>
+              </div>
+          </div>
+  </body>
+</html>
