@@ -184,14 +184,8 @@ function testFrameOne() {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-//To-Do Functions
+//Potential Updates
 //------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//-Create an Alternate Query Function Displaying Anomalous Payroll Periods
-  //-Payroll Every 2 Weeks, Making 2 Months of the Year with 3 Payroll Payouts
-    //-CLARIFY WHEN THIS HAPPENS ~ When a Pay Period Ends Between End of Pay Period and Submission?
-  //-Specialized Alert for January* to Remind Jennifer to Submit on Thursday
-    //-Makes February the Month with an Additional Pay Period, Giving More Time to Accrue Funds
 
 //Future Project: Make Dropdown Menu to Enable Selection of Holidays from Federal/Major Holidays
 
@@ -264,7 +258,9 @@ function makeDropdownWeekday() {
 //Adds Options to Dropdown Menu Interval
 function makeDropdownInterval() {
     let drop = dropdowns.interval;
+    drop.innerHTML = "";
     let units = ["Week", "Bi-Week", "Month", "Quarter", "Year"];
+    if (dropdowns.purpose.value == "Payroll") units = ["Week", "Bi-Week"];
     for (let i = 0; i < units.length; i++) {
         makeDropdownOption(drop, units[i], units[i]);
     }
@@ -448,7 +444,9 @@ function clearCalendarResults() {
 }
 
 //Creates an Element for Results (Default)
-function makeCalendarResult(result) {
+function makeCalendarResult(baseline) {
+    let result = applyHolidays([baseline], false, false)[0];
+    let verified = datesAreSame(baseline, result);
     let winTerms;
     let winValues;
     let winStyling;
@@ -463,6 +461,13 @@ function makeCalendarResult(result) {
     let t = "center";
     let tp = p + 1;
     let f = 18;
+    if (verified != true) {
+        w -= 4;
+        h -= 4;
+        b = "2px solid red";
+        if (c == "#dd4040") b = "2px solid black";
+        //c = "#dd4040";
+    }
 
     winDisplay = styleCalDate(result, dropdowns.style.value, true, false);
 
@@ -541,9 +546,11 @@ function updateCalendar() {
         let curDaySel2 = dropdowns.fday.selectedIndex;
         let curDaySel3 = dropdowns.sday.selectedIndex;
         let curDaySel4 = dropdowns.freq.selectedIndex;
+        let curDaySel5 = dropdowns.interval.selectedIndex;
         makeDropdownDday();
         makeDropdownFday();
         makeDropdownSday();
+        makeDropdownInterval();
         //QOL Starting Date Selection
         if (curDaySel < dropdowns.dday.options.length) {
             dropdowns.dday.selectedIndex = curDaySel;
@@ -567,6 +574,12 @@ function updateCalendar() {
             dropdowns.freq.selectedIndex = curDaySel4;
         } else {
             dropdowns.freq.selectedIndex = 0;
+        }
+        //QOL Interval Selection
+        if (curDaySel5 < dropdowns.interval.options.length && curDaySel5 >= 0) {
+            dropdowns.interval.selectedIndex = curDaySel5;
+        } else {
+            dropdowns.interval.selectedIndex = 0;
         }
         makeAllCalendarResults();
         dropdowns.sdate = makeSdate();
@@ -626,6 +639,71 @@ function makeAllCalendarResults() {
         dropdowns.rest.innerText = "No Results!";
     }
 
+}
+
+//Returns an Calendar with an Additional Fiscal Year as Needed
+function getFullCalendar(catalogue) {
+    let calendar = catalogue;
+    let fisc = new Date(dropdowns.dyear.value, dropdowns.fmonth.value, dropdowns.fday.value);
+    let cur = new Date(dropdowns.dyear.value, parseInt(dropdowns.dmonth.value) - 1, dropdowns.dday.value);
+    let cap = new Date(parseInt(dropdowns.dyear.value) + 1, dropdowns.fmonth.value, dropdowns.fday.value);
+    let altFisc = false;
+    let min;
+    let max;
+    let supportCalendar;
+
+    let qStart = new Date(dropdowns.dyear.value, dropdowns.fmonth.value, dropdowns.fday.value);
+    let qEnd = new Date(dropdowns.dyear.value, parseInt(dropdowns.fmonth.value) + 3, dropdowns.fday.value);
+
+    supportCalendar = catalogueCalendarYear(parseInt(dropdowns.dyear.value) + 1);
+    calendar = combineArrays(catalogue, supportCalendar);
+    supportCalendar = catalogueCalendarYear(parseInt(dropdowns.dyear.value) - 1);
+    calendar = combineArrays(supportCalendar, calendar);
+
+    if (datesAreSame(cur, fisc) == false) {
+        if (dateComesBefore(fisc, cur)) {
+
+            fisc = new Date(parseInt(dropdowns.dyear.value), dropdowns.fmonth.value, parseInt(dropdowns.fday.value));
+            cap = new Date(parseInt(dropdowns.dyear.value) + 1, dropdowns.fmonth.value, parseInt(dropdowns.fday.value) - 1);
+
+            min = fisc;
+            max = cap;
+
+
+            qStart = new Date(dropdowns.dyear.value, dropdowns.fmonth.value, dropdowns.fday.value);
+            qEnd = new Date(dropdowns.dyear.value, parseInt(dropdowns.fmonth.value) + 3, dropdowns.fday.value);
+
+
+
+
+        } else {
+
+            fisc = new Date(parseInt(dropdowns.dyear.value) - 1, dropdowns.fmonth.value, parseInt(dropdowns.fday.value));
+            cap = new Date(parseInt(dropdowns.dyear.value), dropdowns.fmonth.value, parseInt(dropdowns.fday.value) - 1);
+
+            min = fisc;
+            max = cap;
+
+            qStart = new Date(parseInt(dropdowns.dyear.value) - 1, dropdowns.fmonth.value, dropdowns.fday.value);
+            qEnd = new Date(parseInt(dropdowns.dyear.value) - 1, parseInt(dropdowns.fmonth.value) + 3, dropdowns.fday.value);
+
+        }
+        altFisc = true;
+    } else {
+        fisc = new Date(parseInt(dropdowns.dyear.value), dropdowns.fmonth.value, dropdowns.fday.value);
+        cap = new Date(parseInt(dropdowns.dyear.value) + 1, dropdowns.fmonth.value, parseInt(dropdowns.fday.value) - 1);
+        min = fisc;
+        max = cap;
+    }
+    let checkDays = calendar.length;
+
+
+    let result = {
+        "calendar": calendar, "fisc": fisc, "cur": cur, "cap": cap, "altFisc": altFisc, "checkDays": checkDays,
+        "qStart": qStart, "qEnd": qEnd, "min": min, "max": max
+    };
+
+    return result;
 }
 
 //Removes all Calendar Results Before a Specific Date
@@ -809,71 +887,6 @@ function styleCalDate(day, style, spaced, parenthesis) {
 
     if (parenthesis && spaced) result = "( " + result + " )";
     if (parenthesis && spaced == false) result = "(" + result + ")";
-
-    return result;
-}
-
-//Returns an Calendar with an Additional Fiscal Year as Needed
-function getFullCalendar(catalogue) {
-    let calendar = catalogue;
-    let fisc = new Date(dropdowns.dyear.value, dropdowns.fmonth.value, dropdowns.fday.value);
-    let cur = new Date(dropdowns.dyear.value, parseInt(dropdowns.dmonth.value) - 1, dropdowns.dday.value);
-    let cap = new Date(parseInt(dropdowns.dyear.value) + 1, dropdowns.fmonth.value, dropdowns.fday.value);
-    let altFisc = false;
-    let min;
-    let max;
-    let supportCalendar;
-
-    let qStart = new Date(dropdowns.dyear.value, dropdowns.fmonth.value, dropdowns.fday.value);
-    let qEnd = new Date(dropdowns.dyear.value, parseInt(dropdowns.fmonth.value) + 3, dropdowns.fday.value);
-
-    supportCalendar = catalogueCalendarYear(parseInt(dropdowns.dyear.value) + 1);
-    calendar = combineArrays(catalogue, supportCalendar);
-    supportCalendar = catalogueCalendarYear(parseInt(dropdowns.dyear.value) - 1);
-    calendar = combineArrays(supportCalendar, calendar);
-
-    if (datesAreSame(cur, fisc) == false) {
-        if (dateComesBefore(fisc, cur)) {
-
-            fisc = new Date(parseInt(dropdowns.dyear.value), dropdowns.fmonth.value, parseInt(dropdowns.fday.value));
-            cap = new Date(parseInt(dropdowns.dyear.value) + 1, dropdowns.fmonth.value, parseInt(dropdowns.fday.value) - 1);
-
-            min = fisc;
-            max = cap;
-
-
-            qStart = new Date(dropdowns.dyear.value, dropdowns.fmonth.value, dropdowns.fday.value);
-            qEnd = new Date(dropdowns.dyear.value, parseInt(dropdowns.fmonth.value) + 3, dropdowns.fday.value);
-
-
-
-
-        } else {
-
-            fisc = new Date(parseInt(dropdowns.dyear.value) - 1, dropdowns.fmonth.value, parseInt(dropdowns.fday.value));
-            cap = new Date(parseInt(dropdowns.dyear.value), dropdowns.fmonth.value, parseInt(dropdowns.fday.value) - 1);
-
-            min = fisc;
-            max = cap;
-
-            qStart = new Date(parseInt(dropdowns.dyear.value) - 1, dropdowns.fmonth.value, dropdowns.fday.value);
-            qEnd = new Date(parseInt(dropdowns.dyear.value) - 1, parseInt(dropdowns.fmonth.value) + 3, dropdowns.fday.value);
-
-        }
-        altFisc = true;
-    } else {
-        fisc = new Date(parseInt(dropdowns.dyear.value), dropdowns.fmonth.value, dropdowns.fday.value);
-        cap = new Date(parseInt(dropdowns.dyear.value) + 1, dropdowns.fmonth.value, parseInt(dropdowns.fday.value) - 1);
-        min = fisc;
-        max = cap;
-    }
-    let checkDays = calendar.length;
-
-
-    let result = {
-        "calendar": calendar, "fisc": fisc, "cur": cur, "cap": cap, "altFisc": altFisc, "checkDays": checkDays,
-        "qStart": qStart, "qEnd": qEnd, "min": min, "max": max
-    };
 
     return result;
 }
@@ -1188,6 +1201,10 @@ function getCalendarWeeks(catalogue) {
         }
     }
 
+    if (dropdowns.purpose.value == "Payroll") {
+        min = new Date(parseInt(dropdowns.dyear.value), parseInt(dropdowns.dmonth.value) - 1, parseInt(dropdowns.dday.value) - 13);
+    }
+
     result[week] = [];
 
     for (let i = 0; i < checkDays; i++) {
@@ -1206,7 +1223,7 @@ function getCalendarWeeks(catalogue) {
     return result;
 }
 
-//Returns the Dates of a Year's Bi-Weeks
+//Returns the Dates of a Year's Bi-Weeks ~ !!!!Fix to Accomodate Payroll First Date!!!!
 function getCalendarBiWeeks(catalogue) {
     let qs = getCalendarWeeks(catalogue);
     let result = [];
@@ -1225,6 +1242,7 @@ function getCalendarBiWeeks(catalogue) {
 
 //Returns the Dates of a Year's Months
 function getCalendarMonths(catalogue) {
+    let payrollReady = false;
     let resetDay = 1;
     let month = 0;
     let result = [];
@@ -1262,6 +1280,8 @@ function getCalendarMonths(catalogue) {
             }
         }
     }
+
+    if (dropdowns.purpose.value == "Payroll") console.log(result);
 
     return result;
 }
