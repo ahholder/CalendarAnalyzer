@@ -1684,34 +1684,6 @@ function clickResults(id, box, wind) {
 
 //Changes the Weather
 function presser(e) {
-    if (e.code == "Space" && weather.length > 0) {
-        let storm = weather[weather.length - 1].id;
-        if (storm == "heavy rain") commonWeather("light rain");
-        if (storm == "light rain") commonWeather("light snow");
-        if (storm == "light snow") commonWeather("heavy snow");
-        if (storm == "heavy snow") commonWeather("heavy rain");
-        for (let i = 0; i < weather.length - 1; i++) {
-            destroyWeather(i, false);
-        }
-
-    }
-
-
-    if (e.code == "Enter") {
-        for (let i = 0; i < pathfinder.length; i++) {
-            if (pathfinder[i].walkable.length > 1) {
-                pathfinder[i].walkable = [];
-                pathfinder[i] = addWalkable(pathfinder[i], grid[pathfinder[i].space].role);
-            } else {
-                pathfinder[i].walkable = [];
-                let terrainz = tType(-1);
-                for (let i2 = 0; i2 < terrainz.length; i2++) {
-                    pathfinder[i] = addWalkable(pathfinder[i], terrainz[i2]);
-                }
-            }
-            pathfinder[i] = turnPather(pathfinder[i]);
-        }
-    }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
